@@ -12,6 +12,15 @@ Claude Code skills for multi-model AI via [OpenCode](https://opencode.ai).
 
 ## Install
 
+**As a Claude Code plugin**
+
+```bash
+/plugin marketplace add metrovoc/cc-skill-opencode
+/plugin install opencode@cc-skill-opencode
+```
+
+**From source**
+
 ```bash
 # Build ocw wrapper
 cd ocw && go build -o ~/.local/bin/ocw .
