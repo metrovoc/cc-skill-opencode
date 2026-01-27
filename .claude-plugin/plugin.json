@@ -1,0 +1,24 @@
+{
+  "name": "opencode",
+  "description": "Multi-model AI skills via OpenCode - Gemini Flash, Gemini Pro, GPT-5.2",
+  "version": "1.0.0",
+  "author": {
+    "name": "metrovoc"
+  },
+  "homepage": "https://github.com/metrovoc/cc-skill-opencode",
+  "repository": "https://github.com/metrovoc/cc-skill-opencode",
+  "license": "MIT",
+  "keywords": ["opencode", "gemini", "gpt", "multi-model"],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/ensure-ocw.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
