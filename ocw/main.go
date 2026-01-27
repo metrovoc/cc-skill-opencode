@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -191,6 +193,61 @@ func (s *Server) createSession(title string) (string, error) {
 	return result.ID, nil
 }
 
+// autoRejectPermissions listens to SSE and auto-rejects any permission requests
+func (s *Server) autoRejectPermissions(ctx context.Context, sessionID string) {
+	req, err := http.NewRequestWithContext(ctx, "GET", s.baseURL+"/event", nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Accept", "text/event-stream")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	scanner := bufio.NewScanner(resp.Body)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if !strings.HasPrefix(line, "data:") {
+			continue
+		}
+
+		data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		var event struct {
+			Type       string `json:"type"`
+			Properties struct {
+				ID        string `json:"id"`
+				SessionID string `json:"sessionID"`
+			} `json:"properties"`
+		}
+		if err := json.Unmarshal([]byte(data), &event); err != nil {
+			continue
+		}
+
+		// Only handle permission.asked events for our session
+		if event.Type != "permission.asked" || event.Properties.SessionID != sessionID {
+			continue
+		}
+
+		// Auto-reject the permission request
+		rejectBody, _ := json.Marshal(map[string]interface{}{
+			"response": "reject",
+		})
+		rejectReq, _ := http.NewRequestWithContext(ctx, "POST",
+			fmt.Sprintf("%s/session/%s/permissions/%s", s.baseURL, sessionID, event.Properties.ID),
+			bytes.NewReader(rejectBody))
+		rejectReq.Header.Set("Content-Type", "application/json")
+		rejectResp, err := http.DefaultClient.Do(rejectReq)
+		if err == nil {
+			rejectResp.Body.Close()
+		}
+	}
+}
+
 func (s *Server) sendMessage(sessionID, model, variant string, tools map[string]bool, text string, files []string) (string, error) {
 	// Parse model into provider/model
 	modelParts := strings.SplitN(model, "/", 2)
@@ -256,6 +313,11 @@ func (s *Server) sendMessage(sessionID, model, variant string, tools map[string]
 		"parts": parts,
 	})
 
+	// Start SSE listener to auto-reject permission requests
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go s.autoRejectPermissions(ctx, sessionID)
+
 	resp, err := http.Post(
 		fmt.Sprintf("%s/session/%s/message", s.baseURL, sessionID),
 		"application/json",
@@ -266,23 +328,54 @@ func (s *Server) sendMessage(sessionID, model, variant string, tools map[string]
 	}
 	defer resp.Body.Close()
 
+	respBody, _ := io.ReadAll(resp.Body)
+
 	var result struct {
 		Parts []struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
+			Type  string `json:"type"`
+			Text  string `json:"text"`
+			State struct {
+				Status string `json:"status"`
+				Error  string `json:"error"`
+			} `json:"state"`
 		} `json:"parts"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", fmt.Errorf("decode error: %w, body: %s", err, string(respBody))
 	}
 
 	var texts []string
+	var errors []string
 	for _, p := range result.Parts {
-		if p.Type == "text" {
+		switch p.Type {
+		case "text":
 			texts = append(texts, p.Text)
+		case "reasoning":
+			if p.Text != "" {
+				texts = append(texts, p.Text)
+			}
+		case "tool":
+			if p.State.Status == "error" && p.State.Error != "" {
+				if strings.Contains(p.State.Error, "rejected permission") {
+					errors = append(errors, "[ocw] Permission auto-rejected: access outside workspace denied")
+				} else {
+					errors = append(errors, p.State.Error)
+				}
+			}
 		}
 	}
-	return strings.Join(texts, "\n"), nil
+
+	// If we have text, return it
+	if len(texts) > 0 {
+		return strings.Join(texts, "\n"), nil
+	}
+
+	// If only errors, return them
+	if len(errors) > 0 {
+		return strings.Join(errors, "\n"), nil
+	}
+
+	return "", nil
 }
 
 // Worktree management
