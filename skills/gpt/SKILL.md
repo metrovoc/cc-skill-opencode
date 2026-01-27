@@ -1,12 +1,24 @@
 ---
 name: gpt
-description: "Use GPT-5.2 for long-running coding tasks: large refactors, feature implementation. Use --worktree for isolated environment with full edit permissions."
+description: "Use GPT-5.2 for long-running coding tasks: large refactors, feature implementation etc."
 allowed-tools: Bash, Read
 ---
 
 # GPT-5.2 (via ocw)
 
 Long-context coding. Best for: large refactors, feature implementation.
+
+## Prompt Guidelines
+
+GPT strictly follows instructions. Provide as much **high-level design context** as possible:
+
+- Architecture decisions, data flow, component responsibilities
+- Constraints, edge cases, expected behaviors
+
+**Avoid**:
+
+- Contradictory requirements (GPT will struggle to reconcile conflicts)
+- Code snippets — GPT writes code well on its own; use tokens for design info instead
 
 ## Create Session (with worktree for code edits)
 
@@ -15,6 +27,7 @@ ocw new gpt --worktree
 ```
 
 Returns:
+
 - Line 1: 6-char hash
 - Line 2: worktree path (e.g., `/path/to/ocw-abc123`)
 
