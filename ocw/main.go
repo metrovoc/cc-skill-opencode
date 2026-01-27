@@ -248,7 +248,7 @@ func (s *Server) autoRejectPermissions(ctx context.Context, sessionID string) {
 	}
 }
 
-func (s *Server) sendMessage(sessionID, model, variant string, tools map[string]bool, text string, files []string) (string, error) {
+func (s *Server) sendMessage(sessionID, model, variant string, tools map[string]bool, text string, files []string, showThinking bool) (string, error) {
 	// Parse model into provider/model
 	modelParts := strings.SplitN(model, "/", 2)
 	if len(modelParts) != 2 {
@@ -332,12 +332,8 @@ func (s *Server) sendMessage(sessionID, model, variant string, tools map[string]
 
 	var result struct {
 		Parts []struct {
-			Type  string `json:"type"`
-			Text  string `json:"text"`
-			State struct {
-				Status string `json:"status"`
-				Error  string `json:"error"`
-			} `json:"state"`
+			Type string `json:"type"`
+			Text string `json:"text"`
 		} `json:"parts"`
 	}
 	if err := json.Unmarshal(respBody, &result); err != nil {
@@ -345,37 +341,31 @@ func (s *Server) sendMessage(sessionID, model, variant string, tools map[string]
 	}
 
 	var texts []string
-	var errors []string
+	var thinking []string
 	for _, p := range result.Parts {
 		switch p.Type {
 		case "text":
 			texts = append(texts, p.Text)
 		case "reasoning":
 			if p.Text != "" {
-				texts = append(texts, p.Text)
-			}
-		case "tool":
-			if p.State.Status == "error" && p.State.Error != "" {
-				if strings.Contains(p.State.Error, "rejected permission") {
-					errors = append(errors, "[ocw] Permission auto-rejected: access outside workspace denied")
-				} else {
-					errors = append(errors, p.State.Error)
-				}
+				thinking = append(thinking, p.Text)
 			}
 		}
 	}
 
-	// If we have text, return it
-	if len(texts) > 0 {
-		return strings.Join(texts, "\n"), nil
+	var output []string
+
+	// Add thinking if requested
+	if showThinking && len(thinking) > 0 {
+		output = append(output, "<thinking>")
+		output = append(output, thinking...)
+		output = append(output, "</thinking>")
 	}
 
-	// If only errors, return them
-	if len(errors) > 0 {
-		return strings.Join(errors, "\n"), nil
-	}
+	// Add text content
+	output = append(output, texts...)
 
-	return "", nil
+	return strings.Join(output, "\n"), nil
 }
 
 // Worktree management
@@ -474,16 +464,22 @@ func cmdNew(args []string) error {
 
 func cmdChat(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("usage: ocw chat <hash> [-f file...]\nprompt from stdin")
+		return fmt.Errorf("usage: ocw chat <hash> [-f file...] [-t]\nprompt from stdin")
 	}
 
 	hashPrefix := args[0]
 	var files []string
+	showThinking := false
 
 	for i := 1; i < len(args); i++ {
-		if args[i] == "-f" && i+1 < len(args) {
-			files = append(files, args[i+1])
-			i++
+		switch args[i] {
+		case "-f":
+			if i+1 < len(args) {
+				files = append(files, args[i+1])
+				i++
+			}
+		case "-t", "--thinking":
+			showThinking = true
 		}
 	}
 
@@ -525,7 +521,7 @@ func cmdChat(args []string) error {
 	variant := modelVariants[session.Alias]
 
 	// Send message (with optional files)
-	response, err := server.sendMessage(session.FullID, session.Model, variant, tools, promptStr, files)
+	response, err := server.sendMessage(session.FullID, session.Model, variant, tools, promptStr, files, showThinking)
 	if err != nil {
 		return fmt.Errorf("send message: %w", err)
 	}
