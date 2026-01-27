@@ -29,30 +29,6 @@ cd ocw && go build -o ~/.local/bin/ocw .
 ln -s $(pwd)/skills/* ~/.claude/skills/
 ```
 
-## Usage
-
-```bash
-# Create session (returns hash)
-ocw new flash
-
-# Chat (prompt from stdin)
-ocw chat <hash> << 'EOF'
-your prompt
-EOF
-
-# With file attachment
-ocw chat <hash> -f doc.pdf << 'EOF'
-summarize this
-EOF
-
-# GPT with worktree isolation
-ocw new gpt --worktree
-# Returns hash + worktree path
-
-# List sessions
-ocw list
-```
-
 ## Design
 
 - **Explicit session management**: `new` returns hash, `chat` requires hash
