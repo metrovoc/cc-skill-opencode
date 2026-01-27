@@ -1,0 +1,16 @@
+{
+  "name": "cc-skill-opencode",
+  "owner": {
+    "name": "metrovoc"
+  },
+  "metadata": {
+    "description": "Multi-model AI skills via OpenCode (Gemini, GPT)"
+  },
+  "plugins": [
+    {
+      "name": "opencode",
+      "source": "./",
+      "description": "Access Gemini Flash, Gemini Pro, GPT-5.2 from Claude Code"
+    }
+  ]
+}
