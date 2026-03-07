@@ -26,9 +26,9 @@ const (
 )
 
 var modelAliases = map[string]string{
-	"flash": "google/gemini-3-flash-preview",
-	"pro":   "google/gemini-3-pro-preview",
-	"gpt":   "openai/gpt-5.3-codex",
+	"flash": "google-vertex/gemini-3-flash-preview",
+	"pro":   "google-vertex/gemini-3-pro-preview",
+	"gpt":   "openai/gpt-5.4",
 }
 
 var modelVariants = map[string]string{
