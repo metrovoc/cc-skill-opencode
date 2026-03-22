@@ -1,7 +1,7 @@
 {
   "name": "opencode",
   "description": "Multi-model AI skills via OpenCode - Gemini Flash, Gemini Pro, GPT-5.4",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": {
     "name": "metrovoc"
   },
