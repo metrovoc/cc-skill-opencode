@@ -9,17 +9,19 @@ Claude Code skills that enable multi-model AI as subagents via [OpenCode](https:
 
 ## Use Cases
 
-- Ask Gemini 3 Flash to read a large PDF
-- Have Claude brainstorm with Gemini 3 Pro
-- Let Claude delegate large refactoring to GPT-5.2
+- Ask Gemini Flash to read a large PDF
+- Have Claude brainstorm with Gemini Pro
+- Let Claude delegate large refactoring to GPT
 
 ## Skills
 
-| Skill          | Model          | Use Case                  |
-| -------------- | -------------- | ------------------------- |
-| `gemini-flash` | Gemini 3 Flash | PDFs, images, quick tasks |
-| `gemini-pro`   | Gemini 3 Pro   | Deep reasoning, research  |
-| `gpt`          | GPT-5.2 Codex  | Long coding tasks         |
+| Skill          | Use Case                  |
+| -------------- | ------------------------- |
+| `gemini-flash` | PDFs, images, quick tasks |
+| `gemini-pro`   | Deep reasoning, research  |
+| `gpt`          | Long coding tasks         |
+
+Exact model versions are defined in `ocw/main.go` (`flashModel`, `proModel`, `gptModel`). Run `ocw list` or check source for current bindings.
 
 ## Install
 

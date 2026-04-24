@@ -10,7 +10,7 @@
     {
       "name": "opencode",
       "source": "./",
-      "description": "Access Gemini Flash, Gemini Pro, GPT-5.2 from Claude Code"
+      "description": "Access Gemini Flash, Gemini Pro, GPT from Claude Code"
     }
   ]
 }

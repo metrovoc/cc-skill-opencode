@@ -1,10 +1,10 @@
 ---
 name: gpt
-description: "Use GPT-5.4 for long-running coding tasks: large refactors, feature implementation etc."
+description: "Use GPT for long-running coding tasks: large refactors, feature implementation etc."
 allowed-tools: Bash, Read
 ---
 
-# GPT-5.4 (via ocw)
+# GPT (via ocw)
 
 Long-context coding. Best for: large refactors, feature implementation.
 

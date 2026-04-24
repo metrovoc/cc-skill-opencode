@@ -23,12 +23,17 @@ const (
 	storeDir     = ".ocw"
 	storeFile    = "sessions.json"
 	serverPort   = "14200"
+
+	// Model IDs — single source of truth. Bump these when upstream releases a new version.
+	flashModel = "google-vertex/gemini-3-flash-preview"
+	proModel   = "google-vertex/gemini-3.1-pro-preview"
+	gptModel   = "openai/gpt-5.5"
 )
 
 var modelAliases = map[string]string{
-	"flash": "google-vertex/gemini-3-flash-preview",
-	"pro":   "google-vertex/gemini-3.1-pro-preview",
-	"gpt":   "openai/gpt-5.4",
+	"flash": flashModel,
+	"pro":   proModel,
+	"gpt":   gptModel,
 }
 
 var modelVariants = map[string]string{
